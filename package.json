@@ -1,6 +1,6 @@
 {
-  "name": "graphql-voyager",
-  "version": "1.0.0-rc.26",
+  "name": "@prisma-cms/graphql-voyager",
+  "version": "1.0.0-rc.27",
   "description": "GraphQL introspection viewer",
   "main": "dist/voyager.lib.js",
   "types": "typings/index.d.ts",
@@ -73,11 +73,11 @@
   },
   "dependencies": {
     "@f/animate": "^1.0.1",
-    "@material-ui/core": "^3.0.2",
     "classnames": "^2.2.6",
     "clipboard": "^2.0.1",
     "commonmark": "^0.28.1",
     "lodash": "^4.17.10",
+    "material-ui": "1.0.0-beta.43",
     "prop-types": "^15.6.2",
     "react-redux": "^5.0.7",
     "redux": "^4.0.0",
@@ -87,6 +87,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/APIs-guru/graphql-voyager.git"
+    "url": "git+https://github.com/prisma-cms/graphql-voyager.git"
   }
 }

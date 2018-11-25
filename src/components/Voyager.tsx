@@ -5,7 +5,7 @@ import * as _ from 'lodash';
 import { introspectionQuery } from 'graphql/utilities';
 import { Provider } from 'react-redux';
 import { Store } from 'redux';
-import { MuiThemeProvider } from '@material-ui/core/styles';
+import { MuiThemeProvider } from 'material-ui/styles';
 
 import { configureStore } from '../redux';
 

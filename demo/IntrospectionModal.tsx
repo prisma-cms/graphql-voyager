@@ -1,7 +1,6 @@
 import * as React from 'react';
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
-import Button from '@material-ui/core/Button';
+import Tabs, {Tab} from 'material-ui/Tabs';
+import Button from 'material-ui/Button';
 import Clipboard from 'react-clipboard.js';
 
 import {

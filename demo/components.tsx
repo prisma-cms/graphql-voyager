@@ -1,6 +1,5 @@
 import * as React from 'react';
-import Select from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
+import Select from 'material-ui/Select';
 
 import './components.css';
 import LogoIcon from './icons/logo-small.svg';
@@ -41,13 +40,13 @@ export class Panel extends React.Component<PanelProps> {
         <Logo />
         <Select value={activePreset} onChange={this.handleChange}>
           {presets.map(name => (
-            <MenuItem value={name} key={name}>
+            <option value={name} key={name}>
               {name}
-            </MenuItem>
+            </option>
           ))}
-          <MenuItem value={'custom'}>
+          <option value={'custom'}>
             <strong> {'<Your Schema>'} </strong>
-          </MenuItem>
+          </option>
         </Select>
       </div>
     );

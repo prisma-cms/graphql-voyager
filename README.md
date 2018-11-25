@@ -1,3 +1,5 @@
+## Fork from https://github.com/APIs-guru/graphql-voyager
+
 # GraphQL Voyager
 [![jsDelivr](https://data.jsdelivr.com/v1/package/npm/graphql-voyager/badge)](https://www.jsdelivr.com/package/npm/graphql-voyager)
 [![David](https://img.shields.io/david/APIs-guru/graphql-voyager.svg)](https://david-dm.org/APIs-guru/graphql-voyager)

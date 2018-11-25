@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import Checkbox from '@material-ui/core/Checkbox';
+import Checkbox from 'material-ui/Checkbox';
 
 import RootSelector from './RootSelector';
 

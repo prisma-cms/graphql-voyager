@@ -3,8 +3,7 @@ import * as React from 'react';
 
 import { isNode, getDefaultRoot } from '../../graph/';
 
-import Select from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
+import Select from 'material-ui/Select'; 
 
 import './RootSelector.css';
 
@@ -46,9 +45,9 @@ export default class RootSelector extends React.Component<RootSelectorProps> {
         value={rootTypeId}
       >
         {typesList.map(item => (
-          <MenuItem value={item.value} key={item.value}>
-            {item.bold ? <strong> {item.label} </strong> : <span>{item.label}</span>}
-          </MenuItem>
+          <option value={item.value} key={item.value}>
+            {item.label}
+          </option>
         ))}
       </Select>
     );

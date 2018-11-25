@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import IconButton from '@material-ui/core/IconButton';
+import IconButton from 'material-ui/IconButton';
 import EyeIcon from '../icons/remove-red-eye.svg';
 
 import './FocusTypeButton.css';
