@@ -1,10 +1,9 @@
 import * as React from 'react';
 import * as classNames from 'classnames';
 
-import Modal from '@material-ui/core/Modal';
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
-import Button from '@material-ui/core/Button';
+import Modal from 'material-ui/Modal';
+import Tabs, { Tab } from 'material-ui/Tabs';
+import Button from 'material-ui/Button';
 import Clipboard from 'react-clipboard.js';
 
 import { buildSchema, introspectionQuery, introspectionFromSchema } from 'graphql/utilities';
@@ -123,10 +122,10 @@ export class IntrospectionModal extends React.Component<IntrospectionModalProps>
           </div>
 
           <div className="model-footer">
-            <Button variant="contained" onClick={this.handleCancel}>
+            <Button variant="raised" onClick={this.handleCancel}>
               Cancel
             </Button>
-            <Button variant="contained" color="primary"  style={{color: 'white'}} onClick={this.handleSubmit}>
+            <Button variant="raised" color="primary" style={{ color: 'white' }} onClick={this.handleSubmit}>
               Display
             </Button>
           </div>

@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { render } from 'react-dom';
 
-import Button from '@material-ui/core/Button';
-import { MuiThemeProvider } from '@material-ui/core/styles';
+// import Button from 'material-ui/Button';
+import { MuiThemeProvider } from 'material-ui/styles';
 
 import { theme } from '../src/components/MUITheme';
 import { GraphQLVoyager } from '../src';
-import LogoIcon from './icons/logo-small.svg';
+// import LogoIcon from './icons/logo-small.svg';
 
 import { IntrospectionModal } from './IntrospectionModal';
 import { defaultPreset } from './presets';
@@ -43,13 +43,13 @@ export default class Demo extends React.Component {
   public render() {
     const { changeSchemaModalOpen, introspection } = this.state;
 
-    const openChangeSchema = () => this.setState({ changeSchemaModalOpen: true });
+    // const openChangeSchema = () => this.setState({ changeSchemaModalOpen: true });
     const closeChangeSchema = () => this.setState({ changeSchemaModalOpen: false });
 
     return (
       <MuiThemeProvider theme={theme}>
         <GraphQLVoyager introspection={introspection}>
-          <GraphQLVoyager.PanelHeader>
+          {/* <GraphQLVoyager.PanelHeader>
             <div className="voyager-panel">
               <Logo />
               <Button
@@ -62,7 +62,7 @@ export default class Demo extends React.Component {
                 Change Schema
               </Button>
             </div>
-          </GraphQLVoyager.PanelHeader>
+          </GraphQLVoyager.PanelHeader> */}
         </GraphQLVoyager>
         <IntrospectionModal
           open={changeSchemaModalOpen}
@@ -85,21 +85,21 @@ function getQueryParams(): { [key: string]: string } {
   return params;
 }
 
-class Logo extends React.Component {
-  render() {
-    return (
-      <div className="voyager-logo">
-        <a href="https://github.com/APIs-guru/graphql-voyager" target="_blank">
-          <div className="logo">
-            <LogoIcon />
-            <h2 className="title">
-              <strong>GraphQL</strong> Voyager
-            </h2>
-          </div>
-        </a>
-      </div>
-    );
-  }
-}
+// class Logo extends React.Component {
+//   render() {
+//     return (
+//       <div className="voyager-logo">
+//         <a href="https://github.com/APIs-guru/graphql-voyager" target="_blank">
+//           <div className="logo">
+//             <LogoIcon />
+//             <h2 className="title">
+//               <strong>GraphQL</strong> Voyager
+//             </h2>
+//           </div>
+//         </a>
+//       </div>
+//     );
+//   }
+// }
 
 render(<Demo />, document.getElementById('root'));

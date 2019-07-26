@@ -7,7 +7,7 @@ import { WorkerCallback } from '../utils/types';
 import * as React from 'react';
 import * as PropTypes from 'prop-types';
 import { theme } from './MUITheme';
-import { MuiThemeProvider } from '@material-ui/core/styles';
+import { MuiThemeProvider } from 'material-ui/styles';
 
 import GraphViewport from './GraphViewport';
 import DocExplorer from './doc-explorer/DocExplorer';

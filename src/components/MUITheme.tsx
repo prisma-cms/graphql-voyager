@@ -1,6 +1,6 @@
-import { createMuiTheme } from '@material-ui/core/styles';
-import cyan from '@material-ui/core/colors/cyan';
-import yellow from '@material-ui/core/colors/yellow';
+import { createMuiTheme } from 'material-ui/styles';
+import cyan from 'material-ui/colors/cyan';
+import yellow from 'material-ui/colors/yellow';
 
 import variables from './variables.css';
 
@@ -11,7 +11,7 @@ export const theme = createMuiTheme({
   },
   typography: {
     fontSize: 12,
-    useNextVariants: true,
+    // useNextVariants: true,
   },
   overrides: {
     MuiCheckbox: {
