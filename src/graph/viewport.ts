@@ -22,10 +22,10 @@ export class Viewport {
     this.container.innerHTML = '';
     this.$svg = stringToSvg(svgString);
     this.container.appendChild(this.$svg);
-    
+
     // Allow the SVG dimensions to be computed
     // Quick fix for SVG manipulation issues.
-    setTimeout(() => this.enableZoom(), 0);
+    setTimeout(() => this.enableZoom(), 100);
     this.bindClick();
     this.bindHover();
 
@@ -48,13 +48,33 @@ export class Viewport {
     const bbRect = this.container.getBoundingClientRect();
     this.maxZoom = Math.max(svgHeight / bbRect.height, svgWidth / bbRect.width);
 
-    this.zoomer = svgPanZoom(this.$svg, {
-      zoomScaleSensitivity: 0.25,
-      minZoom: 0.95,
-      maxZoom: this.maxZoom,
-      controlIconsEnabled: true,
-    });
-    this.zoomer.zoom(0.95);
+
+    setTimeout(() => {
+
+      console.log("this.$svg", this.$svg);
+
+      console.log("this.$svg svgHeight", svgHeight);
+      console.log("this.$svg svgWidth", svgWidth);
+
+      if (this.$svg) {
+
+        try {
+          this.zoomer = svgPanZoom(this.$svg, {
+            zoomScaleSensitivity: 0.25,
+            minZoom: 0.95,
+            maxZoom: this.maxZoom,
+            controlIconsEnabled: true,
+          });
+          this.zoomer.zoom(0.95);
+        }
+        catch (error) {
+          console.error(error);
+        }
+
+      }
+    }, 3000);
+
+
   }
 
   bindClick() {
