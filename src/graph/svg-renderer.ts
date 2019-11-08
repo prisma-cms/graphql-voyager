@@ -1,13 +1,7 @@
 import * as _ from 'lodash';
-import { getDotSelector } from './dot';
-import { observeStore } from '../redux';
-import { svgRenderingFinished, reportError } from '../actions';
+import { getDot } from './dot';
 
-import {
-  forEachNode,
-  loadWorker as defaultLoadWorker,
-  stringToSvg,
-} from '../utils/';
+import { forEachNode, loadWorker as defaultLoadWorker, stringToSvg } from '../utils/';
 
 import { WorkerCallback } from '../utils/types';
 
@@ -15,51 +9,38 @@ import Viz from 'viz.js';
 import defaultWorkerURI from 'viz.js/full.render.js';
 
 const RelayIconSvg = require('!!svg-as-symbol-loader?id=RelayIcon!../components/icons/relay-icon.svg');
+const DeprecatedIconSvg = require('!!svg-as-symbol-loader?id=DeprecatedIcon!../components/icons/deprecated-icon.svg');
 const svgns = 'http://www.w3.org/2000/svg';
 const xlinkns = 'http://www.w3.org/1999/xlink';
 
 export class SVGRender {
-  unsubscribe: any;
-  viz: any;
+  vizPromise: any;
 
-  constructor(
-    public store,
-    workerURI: string,
-    loadWorker: WorkerCallback = defaultLoadWorker,
-  ) {
-    loadWorker(workerURI || defaultWorkerURI, !workerURI).then(worker => {
-      this.viz = new Viz({ worker });
-
-      this.unsubscribe = observeStore(store, getDotSelector, dot => {
-        if (dot !== null) this._renderSvg(dot);
-      });
-    });
+  constructor(workerURI: string, loadWorker: WorkerCallback = defaultLoadWorker) {
+    this.vizPromise = loadWorker(workerURI || defaultWorkerURI, !workerURI).then(
+      worker => new Viz({ worker }),
+    );
   }
 
-  destroy() {
-    this.unsubscribe();
-  }
-
-  _renderSvg(dot) {
-    console.time('Rendering Graph');
-    this.viz
-      .renderString(dot)
+  renderSvg(typeGraph, displayOptions) {
+    return this.vizPromise
+      .then(viz => {
+        console.time('Rendering Graph');
+        const dot = getDot(typeGraph, displayOptions);
+        return viz.renderString(dot);
+      })
       .then(rawSVG => {
         const svg = preprocessVizSVG(rawSVG);
-        this.store.dispatch(svgRenderingFinished(svg));
-
         console.timeEnd('Rendering Graph');
-      })
-      .catch(error => {
-        const msg = error.message || 'Unknown error';
-        this.store.dispatch(reportError(msg));
+        return svg;
       });
   }
 }
 
 function preprocessVizSVG(svgString: string) {
-  //Add Relay Icon
+  //Add Relay and Deprecated icons
   svgString = svgString.replace(/<svg [^>]*>/, '$&' + RelayIconSvg);
+  svgString = svgString.replace(/<svg [^>]*>/, '$&' + DeprecatedIconSvg);
 
   let svg = stringToSvg(svgString);
 
@@ -112,20 +93,20 @@ function preprocessVizSVG(svgString: string) {
 
     for (var i = 2; i < texts.length; ++i) {
       var str = texts[i].innerHTML;
-      if (str === '{R}') {
+      if (str === '{R}' || str == '{D}') {
         const $iconPlaceholder = texts[i];
         const height = 22;
         const width = 22;
-        const $useRelayIcon = document.createElementNS(svgns, 'use');
-        $useRelayIcon.setAttributeNS(xlinkns, 'href', '#RelayIcon');
-        $useRelayIcon.setAttribute('width', `${width}px`);
-        $useRelayIcon.setAttribute('height', `${height}px`);
+        const $useIcon = document.createElementNS(svgns, 'use');
+        $useIcon.setAttributeNS(xlinkns, 'href', str === '{R}' ? '#RelayIcon' : '#DeprecatedIcon');
+        $useIcon.setAttribute('width', `${width}px`);
+        $useIcon.setAttribute('height', `${height}px`);
 
         //FIXME: remove hardcoded offset
         const y = parseInt($iconPlaceholder.getAttribute('y')) - 15;
-        $useRelayIcon.setAttribute('x', $iconPlaceholder.getAttribute('x'));
-        $useRelayIcon.setAttribute('y', y.toString());
-        $field.replaceChild($useRelayIcon, $iconPlaceholder);
+        $useIcon.setAttribute('x', $iconPlaceholder.getAttribute('x'));
+        $useIcon.setAttribute('y', y.toString());
+        $field.replaceChild($useIcon, $iconPlaceholder);
         continue;
       }
 

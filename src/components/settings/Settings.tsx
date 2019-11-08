@@ -1,36 +1,17 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
+// import { connect } from 'react-redux';
 
 import Checkbox from 'material-ui/Checkbox';
 
 import RootSelector from './RootSelector';
 
-import { getSchemaSelector } from '../../introspection';
-import { changeDisplayOptions } from '../../actions/';
-
 interface SettingsProps {
   schema: any;
   options: any;
-  onChange: any;
+  onChange: (any) => void;
 }
 
-function mapStateToProps(state) {
-  const schema = getSchemaSelector(state);
-  return {
-    options: state.displayOptions,
-    schema: schema,
-  };
-}
-
-function mapDispatchToProps(dispatch) {
-  return {
-    onChange: options => {
-      dispatch(changeDisplayOptions(options));
-    },
-  };
-}
-
-export class Settings extends React.Component<SettingsProps> {
+export default class Settings extends React.Component<SettingsProps> {
   render() {
     let { schema, options, onChange } = this.props;
 
@@ -39,8 +20,8 @@ export class Settings extends React.Component<SettingsProps> {
         <div className="setting-change-root">
           <RootSelector
             schema={schema}
-            rootTypeId={options.rootTypeId}
-            onChange={rootTypeId => onChange({ ...options, rootTypeId })}
+            rootType={options.rootType}
+            onChange={rootType => onChange({ rootType })}
           />
         </div>
         <div className="setting-other-options">
@@ -48,21 +29,28 @@ export class Settings extends React.Component<SettingsProps> {
             id="sort"
             color="primary"
             checked={!!options.sortByAlphabet}
-            onChange={event => onChange({ ...options, sortByAlphabet: event.target.checked })}
+            onChange={event => onChange({ sortByAlphabet: event.target.checked })}
           />
           <label htmlFor="sort">Sort by Alphabet</label>
           <Checkbox
             id="skip"
             color="primary"
             checked={!!options.skipRelay}
-            onChange={event => onChange({ ...options, skipRelay: event.target.checked })}
+            onChange={event => onChange({ skipRelay: event.target.checked })}
           />
           <label htmlFor="skip">Skip Relay</label>
+          <Checkbox
+            id="deprecated"
+            color="primary"
+            checked={!!options.skipDeprecated}
+            onChange={event => onChange({ skipDeprecated: event.target.checked })}
+          />
+          <label htmlFor="deprecated">Skip deprecated</label>
           <Checkbox
             id="showLeafFields"
             color="primary"
             checked={!!options.showLeafFields}
-            onChange={event => onChange({ ...options, showLeafFields: event.target.checked })}
+            onChange={event => onChange({ showLeafFields: event.target.checked })}
           />
           <label htmlFor="showLeafFields">Show leaf fields</label>
         </div>
@@ -70,8 +58,3 @@ export class Settings extends React.Component<SettingsProps> {
     );
   }
 }
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(Settings);

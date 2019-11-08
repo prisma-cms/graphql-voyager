@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import Snackbar from 'material-ui/Snackbar';
 import Button from 'material-ui/Button';
 
-import { clearError } from '../../actions';
+// import { clearError } from '../../actions';
 
 function mapStateToProps(state) {
   return {
@@ -18,7 +18,8 @@ interface ErrorBarProps {
 
 class ErrorBar extends React.PureComponent<ErrorBarProps> {
   handleClose = () => {
-    this.props.dispatch(clearError());
+    // this.props.dispatch(clearError());
+    console.error("handleClose");
   };
   render() {
     const { errorMessage } = this.props;

@@ -61,5 +61,9 @@
         margin-bottom: calc(var(--panel-spacing) - var(--spacing-unit));
       }
     }
+
+    @media (--small-viewport) {
+      left: 10px;
+    }
   }
 }

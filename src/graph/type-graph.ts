@@ -1,25 +1,19 @@
 import * as _ from 'lodash';
-import { createSelector } from 'reselect';
-
-import {
-  getSchemaSelector,
-  isScalarType,
-  isInputObjectType,
-  isSystemType,
-} from '../introspection/';
+import { typeNameToId, isScalarType, isInputObjectType, isSystemType } from '../introspection/';
 
 export function isNode(type) {
   return !(isScalarType(type) || isInputObjectType(type) || isSystemType(type) || type.isRelayType);
 }
 
 export function getDefaultRoot(schema) {
-  return schema.queryType.id;
+  return schema.queryType.name;
 }
 
-function getTypeGraph(schema, rootTypeId: string, hideRoot: boolean) {
+export function getTypeGraph(schema, rootType: string, hideRoot: boolean) {
   if (schema === null) return null;
 
-  return buildGraph(rootTypeId || getDefaultRoot(schema));
+  const rootId = typeNameToId(rootType || getDefaultRoot(schema));
+  return buildGraph(rootId);
 
   function getEdgeTargets(type) {
     return _([
@@ -53,12 +47,3 @@ function getTypeGraph(schema, rootTypeId: string, hideRoot: boolean) {
     };
   }
 }
-
-export const getTypeGraphSelector = createSelector(
-  getSchemaSelector,
-  state => state.displayOptions.rootTypeId,
-  state => state.displayOptions.hideRoot,
-  getTypeGraph,
-);
-
-export const getDisplayOptions = state => state.displayOptions;

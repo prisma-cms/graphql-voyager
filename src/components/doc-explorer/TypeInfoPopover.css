@@ -1,22 +1,29 @@
 @import '../variables.css';
 
+.type-doc  > .type-info-popover {
+  z-index: 0;
+  position: absolute;
+}
+
 .type-info-popover {
   left: var(--doc-panel-width);
-  top: 50%;
+  top: calc(var(--icons-size) + (var(--spacing-unit) * 2) + 1px);
+  bottom: 75px;
   overflow-y: auto;
 
-  transform: translateY(-50%) translateX(-110%);
+  transform: translateX(-110%);
   box-sizing: border-box;
   width: var(--type-info-popover-width);
-  height: 75%;
   padding: calc(var(--spacing-unit) * 2) var(--panel-spacing);
   position: absolute;
   background: white;
   box-shadow: 0px 0 10px 3px var(--shadow-color);
+  border: 1px solid var(--shadow-color);
+  border-left: 0px;
 
   transition: all 0.45s ease-out;
   &.-opened {
-    transform: translateY(-50%);
+    transform: none;
   }
   & > button {
     position: absolute;

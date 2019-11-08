@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import * as React from 'react';
-import { connect } from 'react-redux';
 import * as classNames from 'classnames';
+import { isMatch } from '../../utils';
 
 import './TypeList.css';
 
@@ -11,20 +11,14 @@ import FocusTypeButton from './FocusTypeButton';
 
 interface TypeListProps {
   typeGraph: any;
-  dispatch: any;
+  filter: string;
+  onFocusType: (any) => void;
+  onTypeLink: (any) => void;
 }
 
-class TypeList extends React.Component<TypeListProps> {
-  renderItem(type, className?: string) {
-    return (
-      <div key={type.id} className={classNames('typelist-item', className || '')}>
-        <TypeLink type={type} /> <FocusTypeButton type={type} />
-        <Description className="-doc-type" text={type.description} />
-      </div>
-    );
-  }
+export default class TypeList extends React.Component<TypeListProps> {
   render() {
-    const { typeGraph } = this.props;
+    const { typeGraph, filter, onFocusType, onTypeLink } = this.props;
 
     if (typeGraph === null) return null;
 
@@ -37,11 +31,23 @@ class TypeList extends React.Component<TypeListProps> {
 
     return (
       <div className="doc-explorer-type-list">
-        {rootType && this.renderItem(rootType, '-root')}
-        {_.map(types, type => this.renderItem(type))}
+        {rootType && renderItem(rootType, '-root')}
+        {_.map(types, type => renderItem(type, ''))}
       </div>
     );
+
+    function renderItem(type, className?: string) {
+      if (!isMatch(type.name, filter)) {
+        return null;
+      }
+
+      return (
+        <div key={type.id} className={classNames('typelist-item', className)}>
+          <TypeLink type={type} onClick={onTypeLink} filter={filter}/>
+          <FocusTypeButton onClick={() => onFocusType(type)} />
+          <Description className="-doc-type" text={type.description} />
+        </div>
+      );
+    }
   }
 }
-
-export default connect()(TypeList);

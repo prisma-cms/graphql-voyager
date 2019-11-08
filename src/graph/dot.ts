@@ -1,11 +1,7 @@
-import { createSelector } from 'reselect';
-import { getTypeGraphSelector, getDisplayOptions } from './type-graph';
 import { stringifyWrappers } from '../introspection/';
 import * as _ from 'lodash';
 
-export const getDotSelector = createSelector(getTypeGraphSelector, getDisplayOptions, getDot);
-
-function getDot(typeGraph, displayOptions): string {
+export function getDot(typeGraph, displayOptions): string {
   function isNode(type) {
     return typeGraph.nodes[type.id] !== undefined;
   }
@@ -32,17 +28,15 @@ function getDot(typeGraph, displayOptions): string {
           id = "${node.id}"
           label = ${nodeLabel(node)}
         ]
-        ${objectValues(
-          node.fields,
-          field =>
-            isNode(field.type)
-              ? `
+        ${objectValues(node.fields, field =>
+          isNode(field.type)
+            ? `
           "${node.name}":"${field.name}" -> "${field.type.name}" [
             id = "${field.id} => ${field.type.id}"
             label = "${node.name}:${field.name}"
           ]
         `
-              : '',
+            : '',
         )};
         ${array(
           node.possibleTypes,
@@ -70,7 +64,8 @@ function getDot(typeGraph, displayOptions): string {
 
   function nodeLabel(node) {
     const htmlID = HtmlId('TYPE_TITLE::' + node.name);
-    const kindLabel = node.kind !== 'OBJECT' ? '&lt;&lt;' + node.kind.toLowerCase() + '&gt;&gt;' : '';
+    const kindLabel =
+      node.kind !== 'OBJECT' ? '&lt;&lt;' + node.kind.toLowerCase() + '&gt;&gt;' : '';
 
     return `
       <<TABLE ALIGN="LEFT" BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
@@ -87,7 +82,7 @@ function getDot(typeGraph, displayOptions): string {
   }
 
   function canDisplayRow(type) {
-    if(type.kind === 'SCALAR' || type.kind === 'ENUM') {
+    if (type.kind === 'SCALAR' || type.kind === 'ENUM') {
       return displayOptions.showLeafFields;
     }
     return true;
@@ -95,19 +90,24 @@ function getDot(typeGraph, displayOptions): string {
 
   function nodeField(field) {
     const relayIcon = field.relayType ? TEXT('{R}') : '';
+    const deprecatedIcon = field.isDeprecated ? TEXT('{D}') : '';
     const parts = stringifyWrappers(field.typeWrappers).map(TEXT);
-    return canDisplayRow(field.type) ? `
+    return canDisplayRow(field.type)
+      ? `
       <TR>
         <TD ${HtmlId(field.id)} ALIGN="LEFT" PORT="${field.name}">
           <TABLE CELLPADDING="0" CELLSPACING="0" BORDER="0">
             <TR>
               <TD ALIGN="LEFT">${field.name}<FONT>  </FONT></TD>
-              <TD ALIGN="RIGHT">${relayIcon}${parts[0]}${field.type.name}${parts[1]}</TD>
+              <TD ALIGN="RIGHT">${deprecatedIcon}${relayIcon}${parts[0]}${field.type.name}${
+          parts[1]
+        }</TD>
             </TR>
           </TABLE>
         </TD>
       </TR>
-    `: '';
+    `
+      : '';
   }
 }
 

@@ -1,46 +1,52 @@
+import { introspectionQuery } from 'graphql/utilities';
+
+import { getSchema, extractTypeId } from '../introspection';
+import { SVGRender, getTypeGraph } from '../graph/';
+import { WorkerCallback } from '../utils/types';
+
 import * as React from 'react';
 import * as PropTypes from 'prop-types';
 import * as _ from 'lodash';
 
-import { introspectionQuery } from 'graphql/utilities';
-import { Provider } from 'react-redux';
-import { Store } from 'redux';
+// import { Provider } from 'react-redux';
+// import { Store } from 'redux';
 import { MuiThemeProvider } from 'material-ui/styles';
+import { theme } from './MUITheme';
 
-import { configureStore } from '../redux';
+import GraphViewport from './GraphViewport';
+import DocExplorer from './doc-explorer/DocExplorer';
+import PoweredBy from './utils/PoweredBy';
+import Settings from './settings/Settings';
 
 import './Voyager.css';
 import './viewport.css';
-
-import ErrorBar from './utils/ErrorBar';
-import LoadingAnimation from './utils/LoadingAnimation';
-import DocPanel from './panel/DocPanel';
-
-import { SVGRender } from './../graph/';
-import { Viewport } from './../graph/';
-
-import { changeSchema, reportError, changeDisplayOptions } from '../actions/';
-
-import { typeNameToId } from '../introspection/';
-import { StateInterface } from '../reducers';
-
-import { WorkerCallback } from '../utils/types';
-import Settings from './settings/Settings';
-import { theme } from './MUITheme';
 
 type IntrospectionProvider = (query: string) => Promise<any>;
 
 export interface VoyagerDisplayOptions {
   rootType?: string;
   skipRelay?: boolean;
+  skipDeprecated?: boolean;
   showLeafFields?: boolean;
   sortByAlphabet?: boolean;
   hideRoot?: boolean;
 }
 
+const defaultDisplayOptions = {
+  rootType: undefined,
+  skipRelay: true,
+  skipDeprecated: true,
+  sortByAlphabet: false,
+  showLeafFields: true,
+  hideRoot: false,
+};
+
+function normalizeDisplayOptions(options) {
+  return options != null ? { ...defaultDisplayOptions, ...options } : defaultDisplayOptions;
+}
+
 export interface VoyagerProps {
-  _schemaPresets?: any;
-  introspection: IntrospectionProvider | Object | boolean;
+  introspection: IntrospectionProvider | Object;
   displayOptions?: VoyagerDisplayOptions;
   hideDocs?: boolean;
   hideSettings?: boolean;
@@ -52,15 +58,12 @@ export interface VoyagerProps {
 
 export default class Voyager extends React.Component<VoyagerProps> {
   static propTypes = {
-    introspection: PropTypes.oneOfType([
-      PropTypes.func.isRequired,
-      PropTypes.object.isRequired,
-      PropTypes.bool.isRequired,
-    ]).isRequired,
-    _schemaPresets: PropTypes.object,
+    introspection: PropTypes.oneOfType([PropTypes.func.isRequired, PropTypes.object.isRequired])
+      .isRequired,
     displayOptions: PropTypes.shape({
       rootType: PropTypes.string,
       skipRelay: PropTypes.bool,
+      skipDeprecated: PropTypes.bool,
       sortByAlphabet: PropTypes.bool,
       hideRoot: PropTypes.bool,
       showLeafFields: PropTypes.bool,
@@ -71,86 +74,186 @@ export default class Voyager extends React.Component<VoyagerProps> {
     loadWorker: PropTypes.func,
   };
 
-  viewport: Viewport;
-  renderer: SVGRender;
-  store: Store<StateInterface>;
+  state = {
+    introspectionData: null,
+    schema: null,
+    typeGraph: null,
+    displayOptions: defaultDisplayOptions,
+    selectedTypeID: null,
+    selectedEdgeID: null,
+  };
+
+  svgRenderer: SVGRender;
+  viewportRef = React.createRef<GraphViewport>();
+  instospectionPromise = null;
 
   constructor(props) {
     super(props);
-    this.store = configureStore();
+    this.svgRenderer = new SVGRender(this.props.workerURI, this.props.loadWorker);
   }
 
   componentDidMount() {
-    // init viewport and svg-renderer
-    this.renderer = new SVGRender(this.store, this.props.workerURI, this.props.loadWorker);
-    this.viewport = new Viewport(this.store, this.refs['viewport'] as HTMLElement);
-
-    this.updateIntrospection();
+    this.fetchIntrospection();
   }
 
-  componentWillUnmount() {
-    this.viewport.destroy();
-    this.renderer.unsubscribe();
-  }
+  fetchIntrospection() {
+    const displayOptions = normalizeDisplayOptions(this.props.displayOptions);
 
-  updateIntrospection() {
-    let displayOpts = normalizeDisplayOptions(this.props.displayOptions);
-    if (_.isFunction(this.props.introspection)) {
-      let promise = (this.props.introspection as IntrospectionProvider)(introspectionQuery);
-
-      if (!isPromise(promise)) {
-        this.store.dispatch(
-          reportError('SchemaProvider did not return a Promise for introspection.'),
-        );
-      }
-
-      promise.then(schema => {
-        if (schema === this.store.getState().schema) return;
-        this.store.dispatch(changeSchema(schema, displayOpts));
-      });
-    } else if (this.props.introspection) {
-      this.store.dispatch(changeSchema(this.props.introspection, displayOpts));
+    if (typeof this.props.introspection !== 'function') {
+      this.updateIntrospection(this.props.introspection, displayOptions);
+      return;
     }
+
+    let promise = this.props.introspection(introspectionQuery);
+
+    if (!isPromise(promise)) {
+      throw new Error('SchemaProvider did not return a Promise for introspection.');
+    }
+
+    this.setState({
+      introspectionData: null,
+      schema: null,
+      typeGraph: null,
+      displayOptions: null,
+      selectedTypeID: null,
+      selectedEdgeID: null,
+    });
+
+    this.instospectionPromise = promise;
+    promise.then(introspectionData => {
+      if (promise === this.instospectionPromise) {
+        this.instospectionPromise = null;
+        this.updateIntrospection(introspectionData, displayOptions);
+      }
+    });
+  }
+
+  updateIntrospection(introspectionData, displayOptions) {
+    const schema = getSchema(
+      introspectionData,
+      displayOptions.sortByAlphabet,
+      displayOptions.skipRelay,
+      displayOptions.skipDeprecated,
+    );
+    const typeGraph = getTypeGraph(schema, displayOptions.rootType, displayOptions.hideRoot);
+
+    this.setState({
+      introspectionData,
+      schema,
+      typeGraph,
+      displayOptions,
+      selectedTypeID: null,
+      selectedEdgeID: null,
+    });
   }
 
   componentDidUpdate(prevProps: VoyagerProps) {
     if (this.props.introspection !== prevProps.introspection) {
-      this.updateIntrospection();
-      return;
-    }
-    if (this.props.displayOptions !== prevProps.displayOptions) {
-      let opts = normalizeDisplayOptions(this.props.displayOptions);
-      this.store.dispatch(changeDisplayOptions(opts));
+      this.fetchIntrospection();
+    } else if (this.props.displayOptions !== prevProps.displayOptions) {
+      this.updateIntrospection(
+        this.state.introspectionData,
+        normalizeDisplayOptions(this.props.displayOptions),
+      );
     }
 
     if (this.props.hideDocs !== prevProps.hideDocs) {
-      this.viewport.resize();
+      this.viewportRef.current.resize();
     }
   }
 
   render() {
-    let { hideDocs = false, hideSettings } = this.props;
+    const { hideDocs = false, hideSettings = false } = this.props;
 
+    return (
+      <MuiThemeProvider theme={theme}>
+        <div className="graphql-voyager">
+          {!hideDocs && this.renderPanel()}
+          {!hideSettings && this.renderSettings()}
+          {this.renderGraphViewport()}
+        </div>
+      </MuiThemeProvider>
+    );
+  }
+
+  renderPanel() {
     const children = React.Children.toArray(this.props.children);
-
     const panelHeader = children.find(
       (child: React.ReactElement<any>) => child.type === Voyager.PanelHeader,
     );
 
+    const { typeGraph, selectedTypeID, selectedEdgeID } = this.state;
+    const onFocusNode = id => this.viewportRef.current.focusNode(id);
+
     return (
-      <Provider store={this.store}>
-        <MuiThemeProvider theme={theme}>
-          <div className="graphql-voyager">
-            {!hideDocs && <DocPanel header={panelHeader} />}
-            {!hideSettings && <Settings />}
-            <div ref="viewport" className="viewport" />
-            <ErrorBar />
-            <LoadingAnimation />
-          </div>
-        </MuiThemeProvider>
-      </Provider>
+      <div className="doc-panel">
+        <div className="contents">
+          {panelHeader}
+          <DocExplorer
+            typeGraph={typeGraph}
+            selectedTypeID={selectedTypeID}
+            selectedEdgeID={selectedEdgeID}
+            onFocusNode={onFocusNode}
+            onSelectNode={this.handleSelectNode}
+            onSelectEdge={this.handleSelectEdge}
+          />
+          <PoweredBy />
+        </div>
+      </div>
     );
   }
+
+  renderSettings() {
+    const { schema, displayOptions } = this.state;
+
+    if (schema == null) return null;
+
+    return (
+      <Settings
+        schema={schema}
+        options={displayOptions}
+        onChange={this.handleDisplayOptionsChange}
+      />
+    );
+  }
+
+  renderGraphViewport() {
+    const { displayOptions, typeGraph, selectedTypeID, selectedEdgeID } = this.state;
+
+    return (
+      <GraphViewport
+        svgRenderer={this.svgRenderer}
+        typeGraph={typeGraph}
+        displayOptions={displayOptions}
+        selectedTypeID={selectedTypeID}
+        selectedEdgeID={selectedEdgeID}
+        onSelectNode={this.handleSelectNode}
+        onSelectEdge={this.handleSelectEdge}
+        ref={this.viewportRef}
+      />
+    );
+  }
+
+  handleDisplayOptionsChange = delta => {
+    const displayOptions = { ...this.state.displayOptions, ...delta };
+    this.updateIntrospection(this.state.introspectionData, displayOptions);
+  };
+
+  handleSelectNode = selectedTypeID => {
+    if (selectedTypeID !== this.state.selectedTypeID) {
+      this.setState({ selectedTypeID, selectedEdgeID: null });
+    }
+  };
+
+  handleSelectEdge = selectedEdgeID => {
+    if (selectedEdgeID === this.state.selectedEdgeID) {
+      // deselect if click again
+      this.setState({ selectedEdgeID: null });
+    } else {
+      const selectedTypeID = extractTypeId(selectedEdgeID);
+      this.setState({ selectedTypeID, selectedEdgeID });
+    }
+  };
 
   static PanelHeader = props => {
     return props.children || null;
@@ -160,11 +263,4 @@ export default class Voyager extends React.Component<VoyagerProps> {
 // Duck-type promise detection.
 function isPromise(value) {
   return typeof value === 'object' && typeof value.then === 'function';
-}
-
-function normalizeDisplayOptions(opts: VoyagerDisplayOptions = {}) {
-  return {
-    ...opts,
-    rootTypeId: opts.rootType && typeNameToId(opts.rootType),
-  };
 }

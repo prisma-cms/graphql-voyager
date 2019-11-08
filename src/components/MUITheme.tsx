@@ -11,18 +11,21 @@ export const theme = createMuiTheme({
   },
   typography: {
     fontSize: 12,
+    // useNextVariants: true,
   },
   overrides: {
     MuiCheckbox: {
       root: {
         width: '30px',
         height: '15px',
+        padding: 0,
       },
     },
     MuiIconButton: {
       root: {
         width: variables.iconsSize,
         height: variables.iconSize,
+        padding: 0,
       },
     },
     MuiInput: {

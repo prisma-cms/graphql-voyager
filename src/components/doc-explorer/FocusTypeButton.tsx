@@ -1,28 +1,16 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
+// import { connect } from 'react-redux';
 import IconButton from 'material-ui/IconButton';
 import EyeIcon from '../icons/remove-red-eye.svg';
 
 import './FocusTypeButton.css';
-import { focusElement } from '../../actions/';
 
-interface FocusTypeButtonProps {
-  type: {
-    id: string;
-  };
-  dispatch: any;
-}
-
-const FocusTypeButton: React.SFC<FocusTypeButtonProps> = props => {
+function FocusTypeButton(props: { onClick: () => void }) {
   return (
-    <IconButton
-      className="eye-button"
-      onClick={() => props.dispatch(focusElement(props.type.id))}
-      color="primary"
-    >
+    <IconButton className="eye-button" onClick={props.onClick} color="primary">
       <EyeIcon />
     </IconButton>
   );
-};
+}
 
-export default connect()(FocusTypeButton);
+export default FocusTypeButton;

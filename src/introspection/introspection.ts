@@ -1,6 +1,4 @@
-import { StateInterface } from '../reducers';
 import * as _ from 'lodash';
-import { createSelector } from 'reselect';
 import {
   buildClientSchema,
   introspectionFromSchema,
@@ -128,25 +126,32 @@ function markRelayTypes(schema: SimplifiedIntrospectionWithIds): void {
   _.each(schema.types, type => {
     if (!_.isEmpty(type.interfaces)) {
       type.interfaces = _.reject(type.interfaces, baseType => baseType.type.name === 'Node');
-      if (_.isEmpty(type.interfaces)) delete type.interfaces;
     }
 
     _.each(type.fields, field => {
-      if (!/.Connection$/.test(field.type.name)) return;
+      const connectionType = field.type;
+      if (
+        !/.Connection$/.test(connectionType.name) ||
+        connectionType.kind !== 'OBJECT' ||
+        !connectionType.fields.edges
+      ) {
+        return;
+      }
 
-      //FIXME: additional checks
-      const relayConnetion = field.type;
+      const edgesType = connectionType.fields.edges.type
+      if (edgesType.kind !== 'OBJECT' || !edgesType.fields.node) {
+        return;
+      }
 
-      if (!relayConnetion.fields.edges) return;
+      const nodeType = edgesType.fields.node.type;
 
-      relayConnetion.isRelayType = true;
-      const relayEdge = relayConnetion.fields['edges'].type;
-      relayEdge.isRelayType = true;
-      const realType = relayEdge.fields['node'].type;
-      edgeTypesMap[relayEdge.name] = realType;
+      connectionType.isRelayType = true;
+      edgesType.isRelayType = true;
+
+      edgeTypesMap[edgesType.name] = nodeType;
 
       field.relayType = field.type;
-      field.type = realType;
+      field.type = nodeType;
       field.typeWrappers = ['LIST'];
 
       const relayArgNames = ['first', 'last', 'before', 'after'];
@@ -181,6 +186,20 @@ function markRelayTypes(schema: SimplifiedIntrospectionWithIds): void {
   if (_.get(query, 'fields.relay.type') === queryType) {
     delete query.fields['relay'];
   }
+}
+
+function markDeprecated(schema: SimplifiedIntrospectionWithIds): void {
+  // Remove deprecated fields.
+  _.each(schema.types, type => {
+    type.fields = _.pickBy(type.fields, field => !field.isDeprecated);
+  });
+
+  // We can't remove types that end up being empty
+  // because we cannot be sure that the @deprecated directives where
+  // consistently added to the schema we're handling.
+  //
+  // Entities may have non deprecated fields pointing towards entities
+  // which are deprecated.
 }
 
 function assignTypesAndIDs(schema: SimplifiedIntrospection) {
@@ -230,7 +249,12 @@ function assignTypesAndIDs(schema: SimplifiedIntrospection) {
   schema.types = _.keyBy(schema.types, 'id');
 }
 
-function getSchema(introspection: any, sortByAlphabet: boolean, skipRelay: boolean) {
+export function getSchema(
+  introspection: any,
+  sortByAlphabet: boolean,
+  skipRelay: boolean,
+  skipDeprecated: boolean,
+) {
   if (!introspection) return null;
 
   let schema = buildClientSchema(introspection.data);
@@ -246,13 +270,8 @@ function getSchema(introspection: any, sortByAlphabet: boolean, skipRelay: boole
   if (skipRelay) {
     markRelayTypes((<any>simpleSchema) as SimplifiedIntrospectionWithIds);
   }
+  if (skipDeprecated) {
+    markDeprecated((<any>simpleSchema) as SimplifiedIntrospectionWithIds);
+  }
   return simpleSchema;
 }
-
-export const getSchemaSelector = createSelector(
-  (state: StateInterface) => state.schema,
-  (state: StateInterface) => state.displayOptions.sortByAlphabet,
-  (state: StateInterface) => state.displayOptions.skipRelay,
-  (state: StateInterface) => state.displayOptions.showLeafFields,
-  getSchema,
-);

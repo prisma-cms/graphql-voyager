@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
 import * as classNames from 'classnames';
 
 import './LoadingAnimation.css';
@@ -10,26 +9,11 @@ interface LoadingAnimationProps {
   loading: boolean;
 }
 
-function mapStateToProps(state) {
-  return {
-    loading: state.graphView.svg === null,
-  };
-}
-
-class LoadingAnimation extends React.Component<LoadingAnimationProps> {
-  shouldComponentUpdate(nextProps) {
-    return this.props.loading !== nextProps.loading;
-  }
-
+export default class LoadingAnimation extends React.Component<LoadingAnimationProps> {
   render() {
-    const loading = this.props.loading;
+    const { loading } = this.props;
     return (
-      <div
-        className={classNames({
-          'loading-box': true,
-          visible: loading,
-        })}
-      >
+      <div className={classNames({ 'loading-box': true, visible: loading })}>
         <span className="loading-animation">
           <VoyagerIcon />
           <h1> Transmitting... </h1>
@@ -38,5 +22,3 @@ class LoadingAnimation extends React.Component<LoadingAnimationProps> {
     );
   }
 }
-
-export default connect(mapStateToProps)(LoadingAnimation);
